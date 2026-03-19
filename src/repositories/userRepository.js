@@ -23,12 +23,48 @@ class UserRepository {
    */
   static async findUserByEmail(email) {
     const query = `
-      SELECT id, email, password_hash, created_at 
+      SELECT id, email, password_hash, created_at, failed_login_attempts, locked_until 
       FROM users 
       WHERE email = $1;
     `;
     const result = await db.query(query, [email]);
     return result.rows[0] || null;
+  }
+
+  /**
+   * Increments failed login attempts for a user.
+   */
+  static async incrementFailedAttempts(userId) {
+    const query = `
+      UPDATE users 
+      SET failed_login_attempts = failed_login_attempts + 1 
+      WHERE id = $1;
+    `;
+    await db.query(query, [userId]);
+  }
+
+  /**
+   * Resets failed login attempts for a user.
+   */
+  static async resetFailedAttempts(userId) {
+    const query = `
+      UPDATE users 
+      SET failed_login_attempts = 0, locked_until = NULL 
+      WHERE id = $1;
+    `;
+    await db.query(query, [userId]);
+  }
+
+  /**
+   * Locks a user account for a specific duration.
+   */
+  static async lockAccount(userId, lockUntil) {
+    const query = `
+      UPDATE users 
+      SET locked_until = $2 
+      WHERE id = $1;
+    `;
+    await db.query(query, [userId, lockUntil]);
   }
 
   /**

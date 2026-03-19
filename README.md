@@ -49,7 +49,7 @@ http://localhost:3000/api-docs
 │   ├── repositories/    # Raw SQL queries
 │   ├── routes/          # Express router definitions
 │   └── services/        # Cryptography and core business logic
-├── database/            # Raw SQL migration scripts
+├── database/ migrations # Raw SQL migration scripts
 ├── docker-compose.yml   # Infrastructure definitions
 └── swagger.yaml         # OpenAPI specification
 ```

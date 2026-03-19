@@ -66,6 +66,84 @@ paths:
         '401':
           description: Invalid email or password
 
+  /oidc/authorize:
+    get:
+      summary: Initiate OIDC Authorization Code Flow
+      tags: [OIDC]
+      parameters:
+        - name: client_id
+          in: query
+          required: true
+          schema: { type: string }
+        - name: redirect_uri
+          in: query
+          required: true
+          schema: { type: string }
+        - name: scope
+          in: query
+          required: true
+          schema: { type: string, example: "openid profile email" }
+        - name: response_type
+          in: query
+          required: true
+          schema: { type: string, example: "code" }
+        - name: state
+          in: query
+          schema: { type: string }
+      responses:
+        '200':
+          description: Status of authorization request (e.g. CONSENT_REQUIRED)
+
+    post:
+      summary: Complete authorization (Headless Consent)
+      tags: [OIDC]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [client_id, redirect_uri, userId]
+              properties:
+                client_id: { type: string }
+                redirect_uri: { type: string }
+                scope: { type: string }
+                userId: { type: string }
+      responses:
+        '200':
+          description: Successfully issued authorization code
+
+  /oidc/token:
+    post:
+      summary: Exchange authorization code or refresh token for OIDC tokens
+      tags: [OIDC]
+      requestBody:
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              required: [grant_type, client_id, client_secret]
+              properties:
+                grant_type: { type: string, enum: [authorization_code, refresh_token] }
+                code: { type: string }
+                redirect_uri: { type: string }
+                client_id: { type: string }
+                client_secret: { type: string }
+                refresh_token: { type: string }
+      responses:
+        '200':
+          description: Tokens returned (access_token, id_token, refresh_token)
+
+  /oidc/userinfo:
+    get:
+      summary: Get OIDC user claims
+      tags: [OIDC]
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: User claims (sub, email, profile)
+
   /users/profile:
     get:
       summary: Get user profile
