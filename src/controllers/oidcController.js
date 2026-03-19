@@ -1,8 +1,6 @@
 import ClientRepository from '../repositories/clientRepository.js';
 import OIDCService from '../services/oidcService.js';
 import AuthService from '../services/authService.js';
-import UserRepository from '../repositories/userRepository.js';
-import crypto from 'crypto';
 
 class OIDCController {
   /**
@@ -46,10 +44,8 @@ class OIDCController {
    * Requires user authentication (e.g., via session cookie or bearer token).
    */
   static async postAuthorize(req, res) {
-    const { client_id, redirect_uri, scope, state, userId } = req.body;
-    // Note: userId should ideally come from a verified session/token.
-    // In this headless example, we expect the frontend to pass the userId after login.
-    // REAL WORLD: This endpoint should be protected by the IdP's own auth middleware.
+    const { client_id, redirect_uri, scope, state } = req.body;
+    const userId = req.user?.userId;
 
     if (!userId) {
       return res.status(401).json({ error: 'login_required' });

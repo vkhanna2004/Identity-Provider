@@ -2,6 +2,7 @@ import express from 'express';
 import OIDCDiscoveryController from '../controllers/oidcDiscoveryController.js';
 import OIDCController from '../controllers/oidcController.js';
 import UserInfoController from '../controllers/userInfoController.js';
+import { verifyToken } from '../middlewares/authMiddleware.js';
 
 const router = express.Router();
 
@@ -11,7 +12,7 @@ router.get('/jwks.json', OIDCDiscoveryController.getJwks);
 
 // OAuth2/OIDC Flows
 router.get('/authorize', OIDCController.getAuthorize);
-router.post('/authorize', OIDCController.postAuthorize);
+router.post('/authorize', verifyToken, OIDCController.postAuthorize);
 router.post('/token', OIDCController.postToken);
 
 // UserInfo

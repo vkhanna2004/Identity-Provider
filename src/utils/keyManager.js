@@ -63,12 +63,14 @@ class KeyManager {
     const publicKeyObj = crypto.createPublicKey(this.publicKey);
     const jwk = publicKeyObj.export({ format: 'jwk' });
 
+    const kid = crypto.createHash('sha256').update(this.publicKey).digest('hex').substring(0, 16); //key-id
+
     // Ensure kids/alg/use/typ are set for OIDC compliance
     this.jwks = {
       keys: [
         {
           ...jwk,
-          kid: 'idp-key-1', // In production, this should be a stable hash or identifier
+          kid: kid,
           use: 'sig',
           alg: 'RS256'
         }
