@@ -12,5 +12,7 @@ const loginLimiter = createRateLimiter('login', 5, 900, 'Too many login attempts
 
 router.post('/register', registerLimiter, AuthController.register);
 router.post('/login', loginLimiter, AuthController.login);
+router.post('/refresh-token', AuthController.refreshToken);
+router.post('/logout', AuthController.logout);
 
 export default router;

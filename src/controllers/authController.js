@@ -1,5 +1,4 @@
 import AuthService from '../services/authService.js';
-import jwt from 'jsonwebtoken'
 
 class AuthController {
   static async register(req, res) {
@@ -56,23 +55,34 @@ class AuthController {
         return res.status(400).json({ error: 'Refresh token is required' });
       }
 
-      const decoded = jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET);
-      
-      // TODO you would also check if this token 
-      // is stored in the database and hasn't been revoked.
-
-      const newAccessToken = jwt.sign(
-        { userId: decoded.userId, email: decoded.email, roles: decoded.roles },
-        process.env.JWT_ACCESS_SECRET,
-        { expiresIn: '15m' }
-      );
+      const tokens = await AuthService.refreshToken(refreshToken);
 
       return res.status(200).json({
         message: 'Token rotated successfully',
-        accessToken: newAccessToken
+        ...tokens
       });
     } catch (error) {
+      if (error.message.includes('revoked') || error.message.includes('security')) {
+        return res.status(401).json({ error: error.message });
+      }
       return res.status(403).json({ error: 'Invalid or expired refresh token' });
+    }
+  }
+
+  static async logout(req, res) {
+    try {
+      const { refreshToken } = req.body;
+
+      if (!refreshToken) {
+        return res.status(400).json({ error: 'Refresh token is required' });
+      }
+
+      await AuthService.logout(refreshToken);
+
+      return res.status(200).json({ message: 'Logout successful' });
+    } catch (error) {
+      console.error('Logout Error:', error);
+      return res.status(500).json({ error: 'Internal server error' });
     }
   }
 }

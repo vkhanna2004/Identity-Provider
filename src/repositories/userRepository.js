@@ -2,6 +2,21 @@ import db from "../config/db.js";
 
 class UserRepository {
   /**
+   * Finds a user by their ID
+   * @param {string} id 
+   * @returns {Promise<Object|null>} The user object or null
+   */
+  static async findUserById(id) {
+    const query = `
+      SELECT id, email, created_at 
+      FROM users 
+      WHERE id = $1;
+    `;
+    const result = await db.query(query, [id]);
+    return result.rows[0] || null;
+  }
+
+  /**
    * Finds a user by their email address
    * @param {string} email 
    * @returns {Promise<Object|null>} The user object or null
@@ -54,6 +69,22 @@ class UserRepository {
     } finally {
       client.release();
     }
+  }
+
+  /**
+   * Retrieves roles for a specific user
+   * @param {string} userId 
+   * @returns {Promise<string[]>} Array of role names
+   */
+  static async getUserRoles(userId) {
+    const query = `
+      SELECT r.name 
+      FROM roles r
+      JOIN user_roles ur ON r.id = ur.role_id
+      WHERE ur.user_id = $1;
+    `;
+    const result = await db.query(query, [userId]);
+    return result.rows.map(row => row.name);
   }
 }
 
