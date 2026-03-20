@@ -157,3 +157,19 @@ paths:
           description: Access denied. No token provided.
         '403':
           description: Invalid or expired token.
+
+  /.well-known/openid-configuration:
+    get:
+      summary: OIDC Discovery Endpoint
+      tags: [OIDC]
+      responses:
+        '200':
+          description: Returns OIDC configuration metadata
+
+  /.well-known/jwks.json:
+    get:
+      summary: JSON Web Key Set (JWKS)
+      tags: [OIDC]
+      responses:
+        '200':
+          description: Returns public keys for token verification

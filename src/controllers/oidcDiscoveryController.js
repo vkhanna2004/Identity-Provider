@@ -9,7 +9,7 @@ class OIDCDiscoveryController {
       authorization_endpoint: `${issuer}/api/oidc/authorize`,
       token_endpoint: `${issuer}/api/oidc/token`,
       userinfo_endpoint: `${issuer}/api/oidc/userinfo`,
-      jwks_uri: `${issuer}/api/oidc/jwks.json`,
+      jwks_uri: `${issuer}/.well-known/jwks.json`,
       response_types_supported: ["code", "id_token", "token id_token"],
       subject_types_supported: ["public"],
       id_token_signing_alg_values_supported: ["RS256"],

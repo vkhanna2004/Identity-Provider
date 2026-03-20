@@ -1,3 +1,5 @@
+// This script is a utility to manually add a "test" client to your database (oauth_clients table) so you can test your
+//   IdP without building a registration UI first.
 import crypto from 'crypto';
 import ClientRepository from '../src/repositories/clientRepository.js';
 
