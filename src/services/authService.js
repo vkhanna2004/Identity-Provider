@@ -73,13 +73,13 @@ class AuthService {
    */
   static async generateTokens(userId, email, roles) {
     const accessToken = jwt.sign(
-      { userId, email, roles },
+      { jti: crypto.randomBytes(16).toString('hex'), userId, email, roles },
       process.env.JWT_ACCESS_SECRET,
       { expiresIn: '15m' }
     );
 
     const refreshToken = jwt.sign(
-      { userId },
+      { jti: crypto.randomBytes(16).toString('hex'), userId },
       process.env.JWT_REFRESH_SECRET,
       { expiresIn: '7d' }
     );
@@ -183,11 +183,11 @@ class AuthService {
   }
 
   /**
-   * Revokes a specific refresh token (Logout).
+   * Revokes a specific refresh token and blacklists the access token (Logout).
    */
-  static async logout(refreshToken) {
+  static async logout(refreshToken, accessToken) {
     try {
-      const decoded = jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET);
+      const decodedRefresh = jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET);
       const tokenHash = crypto.createHash('sha256').update(refreshToken).digest('hex');
       const storedToken = await TokenRepository.findRefreshTokenByHash(tokenHash);
 
@@ -195,11 +195,28 @@ class AuthService {
         await TokenRepository.revokeRefreshToken(storedToken.id);
       }
 
-      const redisKey = `session:${decoded.userId}:${tokenHash}`;
+      const redisKey = `session:${decodedRefresh.userId}:${tokenHash}`;
       try {
         await redisClient.del(redisKey);
       } catch (err) {
         console.error('Redis Error:', err);
+      }
+
+      // Blacklist Access Token (if provided)
+      if (accessToken) {
+        try {
+          const decodedAccess = jwt.decode(accessToken);
+          if (decodedAccess && decodedAccess.jti) {
+            const remainingTime = decodedAccess.exp - Math.floor(Date.now() / 1000);
+            if (remainingTime > 0) {
+              await redisClient.set(`blacklist:${decodedAccess.jti}`, 'revoked', {
+                EX: remainingTime
+              });
+            }
+          }
+        } catch (err) {
+          console.error('Access Token Blacklist Error:', err);
+        }
       }
     } catch (error) {
       console.error('Logout Error:', error);

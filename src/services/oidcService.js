@@ -42,6 +42,7 @@ class OIDCService {
     // Access Token (can be a standard JWT or opaque)
     // For OIDC, making it a JWT allows other services to verify it via JWKS.
     const accessTokenPayload = {
+      jti: crypto.randomBytes(16).toString('hex'), // Unique token ID
       iss: issuer,
       sub: user.id,
       aud: clientId,
@@ -53,12 +54,13 @@ class OIDCService {
 
     // Sign tokens with RSA private key
     const privateKey = keyManager.getPrivateKey();
-    const idToken = jwt.sign(idTokenPayload, privateKey, { algorithm: 'RS256', keyid: 'idp-key-1' });
-    const accessToken = jwt.sign(accessTokenPayload, privateKey, { algorithm: 'RS256', keyid: 'idp-key-1' });
+    const kid = keyManager.getKid();
+    const idToken = jwt.sign(idTokenPayload, privateKey, { algorithm: 'RS256', keyid: kid });
+    const accessToken = jwt.sign(accessTokenPayload, privateKey, { algorithm: 'RS256', keyid: kid });
 
-    // Refresh Token (consistent with existing system but tailored for OIDC client)
+    // Refresh Token
     const refreshToken = jwt.sign(
-      { userId, clientId },
+      { jti: crypto.randomBytes(16).toString('hex'), userId, clientId },
       process.env.JWT_REFRESH_SECRET,
       { expiresIn: '7d' }
     );
@@ -117,9 +119,12 @@ class OIDCService {
       const client = await ClientRepository.findByClientId(clientId);
       if (!client) throw new Error('Client not found');
       
-      const isMatch = await crypto.timingSafeEqual(
-          Buffer.from(crypto.createHash('sha256').update(clientSecret).digest('hex')),
-          Buffer.from(client.client_secret_hash)
+      const hashedProvidedSecret = crypto.createHash('sha256').update(clientSecret).digest('hex');
+      
+      // Compare hex buffers securely
+      const isMatch = crypto.timingSafeEqual(
+          Buffer.from(hashedProvidedSecret, 'hex'),
+          Buffer.from(client.client_secret_hash, 'hex')
       );
 
       if (!isMatch) throw new Error('Invalid client secret');

@@ -76,6 +76,11 @@ class KeyManager {
         }
       ]
     };
+    this.kid = kid;
+  }
+
+  getKid() {
+    return this.kid;
   }
 
   getPrivateKey() {

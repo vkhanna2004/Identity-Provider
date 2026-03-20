@@ -1,6 +1,7 @@
 import jwt from 'jsonwebtoken'
+import redisClient from '../config/redis.js';
 
-export const verifyToken = (req, res, next) => {
+export const verifyToken = async (req, res, next) => {
   const authHeader = req.headers.authorization;
 
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
@@ -11,6 +12,15 @@ export const verifyToken = (req, res, next) => {
 
   try {
     const decoded = jwt.verify(token, process.env.JWT_ACCESS_SECRET);
+    
+    // Check if token is blacklisted (Revocation)
+    if (decoded.jti) {
+      const isBlacklisted = await redisClient.get(`blacklist:${decoded.jti}`);
+      if (isBlacklisted) {
+        return res.status(403).json({ error: 'Token has been revoked.' });
+      }
+    }
+
     req.user = decoded; 
     next(); 
   } catch (error) {
