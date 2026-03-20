@@ -21,8 +21,16 @@ class AuthService {
     const saltRounds = 12;
     const passwordHash = await bcrypt.hash(plainTextPassword, saltRounds);
 
-    const newUser = await UserRepository.createUser(email, passwordHash);
-    return newUser;
+    try {
+      const newUser = await UserRepository.createUser(email, passwordHash);
+      return newUser;
+    } catch (error) {
+      // Handle race condition where user is created between our check and our insert
+      if (error.code === '23505') { // PostgreSQL unique_violation code
+        throw new Error('User already exists');
+      }
+      throw error;
+    }
   }
 
   /**
