@@ -1,0 +1,24 @@
+# Ignore version control metadata
+.git
+.gitignore
+
+# Ignore local package managers & dependencies
+node_modules/
+
+# Ignore build outputs and logs
+dist/
+build/
+*.log
+
+# Ignore local secrets and IDE configs
+.env
+.env.*
+.vscode/
+.idea/
+
+# Ignore the ignore file itself
+.dockerignore
+
+Dockerfile
+README.md 
+document.md
